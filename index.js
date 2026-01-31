@@ -36,13 +36,33 @@ function connectWS() {
   ws.on("open", () => {
     console.log("✅ Conectado na WS");
 
-    // Ping a cada 20s pra manter viva
+    // Ping a cada 20s para manter a conexão viva
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
         console.log("📡 Ping enviado");
       }
     }, 20000);
+
+    // TESTE: envia mensagem de teste ao abrir a conexão
+    (async () => {
+      try {
+        const res = await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bot ${DISCORD_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            content: "🟢 Bot conectado na WS!"
+          })
+        });
+        const text = await res.text();
+        console.log("📨 Discord status teste inicial:", res.status, text);
+      } catch (err) {
+        console.error("❌ Erro enviando teste inicial pro Discord:", err.message);
+      }
+    })();
   });
 
   // Recebendo mensagem da WS
@@ -51,7 +71,7 @@ function connectWS() {
     console.log("📩 WS:", msg);
 
     // Envia mensagem pro Discord
-    if (true) { // TESTE: envia qualquer mensagem
+    if (true) { // para teste, envia todas as mensagens
       try {
         const res = await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
           method: "POST",
@@ -69,6 +89,39 @@ function connectWS() {
       } catch (err) {
         console.error("❌ Erro enviando pro Discord:", err.message);
       }
+    }
+  });
+
+  // WS fechou
+  ws.on("close", () => {
+    console.log("⚠️ WS desconectada. Reconectando em 5s...");
+    clearInterval(pingInterval);
+    setTimeout(connectWS, 5000);
+  });
+
+  // Erro WS
+  ws.on("error", (err) => {
+    console.error("❌ WS erro:", err.message);
+  });
+}
+
+// ===============================
+// Inicia a WS
+// ===============================
+connectWS();
+
+// Mantém o app vivo no Render
+setInterval(() => {}, 1000);      },
+      body: JSON.stringify({
+        content: `🧠 Brainrot detectado!\n${data.toString()}` // mensagem da WS
+      })
+    });
+
+    const text = await res.text();
+    console.log("📨 Discord status:", res.status, text); // mostra resposta do Discord
+  } catch (err) {
+    console.error("❌ Erro enviando pro Discord:", err.message);
+  }
     }
   });
 
