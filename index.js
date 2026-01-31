@@ -12,18 +12,27 @@ if (!DISCORD_TOKEN || !CHANNEL_ID) {
 const WS_URL = "wss://ws-1hb2.onrender.com";
 
 function connectWS() {
-  console.log("🔄 Tentando conectar na WS...");
-
+  console.log("🔄 Conectando na WS...");
   const ws = new WebSocket(WS_URL);
+
+  let pingInterval;
 
   ws.on("open", () => {
     console.log("✅ Conectado na WS");
+
+    pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+        console.log("📡 Ping enviado");
+      }
+    }, 20000);
   });
 
   ws.on("message", async (data) => {
-    console.log("📩 Mensagem recebida:", data.toString());
+    const msg = data.toString();
+    console.log("📩 WS:", msg);
 
-    if (data.toString().toLowerCase().includes("brainrot")) {
+    if (msg.toLowerCase().includes("brainrot")) {
       await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
         method: "POST",
         headers: {
@@ -31,23 +40,22 @@ function connectWS() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          content: "🧠 Brainrot detectado!"
+          content: `🧠 Brainrot detectado!\n${msg}`
         })
       });
     }
   });
 
   ws.on("close", () => {
-    console.log("⚠️ WS desconectada. Tentando reconectar em 5s...");
+    console.log("⚠️ WS desconectada. Reconectando em 5s...");
+    clearInterval(pingInterval);
     setTimeout(connectWS, 5000);
   });
 
   ws.on("error", (err) => {
-    console.error("❌ Erro WS:", err.message);
+    console.error("❌ WS erro:", err.message);
   });
 }
-
 // 🔒 Mantém o processo vivo
-setInterval(() => {}, 1000);
-
 connectWS();
+setInterval(() => {}, 1000);
