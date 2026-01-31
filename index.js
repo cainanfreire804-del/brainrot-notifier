@@ -43,7 +43,7 @@ function connectWS() {
     const msg = data.toString();
     console.log("📩 WS:", msg);
 
-    if (msg.toLowerCase().includes("brainrot")) {
+    if (true) {
       await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
         method: "POST",
         headers: {
